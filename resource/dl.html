@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+		<title>百度地图下载</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="static/css/bootstrap.min.css">
+		<!--
+		字体图标另外加载 使用: 
+		https://useiconic.com/open#icons
+		<span class="oi oi-info" title="star" aria-hidden="true"></span>
+		-->
+		<link rel="stylesheet" href="static/css/open-iconic-bootstrap.css">
+    <style>
+			.table{font-size:13px;}
+			.card {height:270px;overflow-x:hidden;overflow-y:auto;}
+			#table-div{max-height:174px;overflow-x:hidden;overflow-y:auto;}
+			.map-type{ cursor:pointer; }
+			.map-type-icon{font-size:28px; position:absolute;z-index:10;}
+			.tile-text{ font-size:14px; }
+			.tile-text span{ font-size:20px;}
+			.tile-x{font-size:12px;color:black;}
+			.mbtn{font-size:12px;padding:3px 5px; border:0;margin-top:2px;margin-left:5px;}
+		</style>
+		<!-- jQuery first, Bootstrap JS-->
+    <script src="static/js/jquery-3.3.1.min.js"></script>
+    <script src="static/js/bootstrap.bundle.min.js"></script>
+    <script src="static/js/layer.js"></script>
+  </head>
+  <body>
+		<header class="navbar navbar-expand navbar-dark bg-primary flex-column flex-md-row">
+			<a class="navbar-brand" href="#">
+				<img src="static/img/logo-down.jpg" width="30" height="30" class="d-inline-block align-top" /> 斑马鱼-百度地图下载
+			</a>
+			<ul class="navbar-nav nav flex-row ml-md-auto">
+				<li class="nav-item">
+					<a class="nav-link">此软件支持普通地图和卫星混合地图瓦片下载，仅限于个人研究学习之用。</a>
+				</li>
+			</ul>
+		</header>
+	
+		<div class="container-fluid mt-3">
+			<div class="row">
+				<div class="col-sm">
+					<div class="card">
+						<div class="card-body">
+							<h5 class="card-title"><span class="oi oi-list" aria-hidden="true"></span> 瓦片概况</h5>
+							<h6 class="card-subtitle mb-2 text-muted">已选每级别瓦片个数</h6>
+							<div id="table-div">
+							<table class="table table-sm">
+								<thead>
+									<tr>
+										<th scope="col">级别</th>
+										<th scope="col">瓦片数</th>
+									</tr>
+								</thead>
+								<tbody id="tile-table">
+									<tr>
+										<th scope="row">1</th>
+										<td>1234</td>
+									</tr>
+									<tr>
+										<th scope="row">2</th>
+										<td>5698</td>
+									</tr>
+									<tr>
+										<th scope="row">3</th>
+										<td>789566</td>
+									</tr>
+								</tbody>
+							</table>
+							</div>
+						</div>
+					</div>
+				</div>
+				
+				<div class="col-sm">
+					<div class="card">
+						<div class="card-body">
+							<h5 class="card-title"><span class="oi oi-image" aria-hidden="true"></span> 地图类型</h5>
+							<h6 class="card-subtitle mb-2 text-muted">选择普通或混合地图</h6>
+								<div class="map-type" id="map-type0">
+									<span id="map-type0-chk" class="map-type-icon oi oi-circle-check text-primary" style="top:90px" aria-hidden="true"></span>
+									<img src="static/img/type0.jpg" height="80" class="card-img" alt="普通地图">
+								</div>
+								<div class="map-type mt-2"  id="map-type1">
+									<span id="map-type1-chk" class="map-type-icon oi oi-circle-x text-primary" style="top:180px" aria-hidden="true"></span>
+									<img src="static/img/type1.jpg" height="80" class="card-img" alt="混合地图">
+								</div>
+						</div>
+					</div>
+				</div>
+				
+				<div class="col-sm">
+					<div class="card">
+						<div class="card-body">
+							<h5 class="card-title"><span class="oi oi-task" aria-hidden="true"></span> 下载控制</h5>
+							<h6 class="card-subtitle mb-2 text-muted">多线程并行下载 <small class="text-primary" id="progress">80.45%</small></h6>
+							<p class="card-text">
+								<h6 class="tile-text">瓦片总数 <span id="tile-total" class="text-success">11459876</span><small class="tile-x">×2</small></h6>
+								<h6 class="tile-text">已下载数 <span id="tile-down" class="text-success">1200</span><small class="tile-x">×2</small></h6>
+								<h6 class="tile-text">错误个数 <span id="tile-err" class="text-danger">0</span></h6>
+							</p>
+							<button id="btn-start" type="button" class="btn btn-outline-primary mbtn"><span class="oi oi-arrow-circle-bottom" aria-hidden="true"></span> 开始下载</button>
+							<button id="btn-stop" type="button" class="btn btn-outline-primary mbtn"><span class="oi oi-circle-x" aria-hidden="true"></span> 终止下载</button>
+							<button id="btn-redo" type="button" class="btn btn-outline-primary mbtn"><span class="oi oi-reload" aria-hidden="true"></span> 重新开始</button>
+							<button id="btn-errdo" type="button" class="btn btn-outline-primary mbtn"><span class="oi oi-link-broken" aria-hidden="true"></span> 错误重下</button>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-sm">
+					<form>
+						<div class="form-group row mb-1 mt-1">
+							<label for="task-input" class="col-sm-3 col-form-label col-form-label-sm ">下载任务文件(<a href="javascript:window.openFile()">选择...</a>)</label>
+							<div class="col-sm-9">
+								<input type="text" class="form-control form-control-sm" id="task-file" placeholder="请从文件菜单中选择任务文件" readonly="true">
+							</div>
+						</div>
+						<div class="form-group row">
+							<label for="task-dir" class="col-sm-3 col-form-label col-form-label-sm">瓦片保存目录(<a href="javascript:window.openDir()">打开...</a>)</label>
+							<div class="col-sm-9">
+								<input type="text" class="form-control form-control-sm" id="task-dir" placeholder="瓦片保存在任务文件目录下" readonly="true">
+							</div>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+  </body>
+</html>
+<script>
+//jsCallGlobal调用的全局函数
+function openTask(task, zooms){
+	App.openTask(task, zooms);
+}
+var App = {
+	totalCount: 0
+	,downCount: 0
+	,errCount: 0
+	//清空画面
+	,clearAll: function(){
+		$('#task-file').val('');
+		$('#task-dir').val('');
+		$('#tile-table').html('');
+		$('#tile-total').text('0');
+		$('#tile-down').text('0');
+		$('#tile-err').text('');
+		$('#progress').text('');
+		$('.tile-x').text(''); //×2
+		this.typeChecked(0, true);
+		this.typeChecked(1, false);
+		this.disableAllBtn();
+	}
+	//关于对话框
+	,about: function(){
+		layer.alert('Hello!');
+	}
+	//设置线程数
+	,setThread: function(){
+		var v = window.getThreadCount();
+		layer.prompt({title:'输入并行下载线程数,在1到50之间', value:v}, function(num, index){
+			var count = parseInt(num);
+			if(isNaN(count) || count < 1 || count > 50){
+				App.msg('并行下载线程数,在1到50之间!');
+			} 
+			else {
+				var ret = window.setThreadCount(count);
+				if( ret == 1 ) 
+					App.msg('已设置下载线程数为'+count);
+				else
+					App.msg(ret);
+			}
+			layer.close(index);
+		});
+	}
+	//提示消息
+	,msg: function(s){
+		layer.msg(s, {offset:'b'});
+	}
+	//警告信息
+	,alert: function(s){
+		layer.alert(s, {title:'小郭软件'});
+	}
+	//切换地图类型
+	,typeClicked: function(id){
+		var chk = $('#'+id);
+		if( chk.hasClass('oi-circle-check') ){
+			chk.removeClass('oi-circle-check').addClass('oi-circle-x');
+		}
+		else if( chk.hasClass('oi-circle-x') ){
+			chk.removeClass('oi-circle-x').addClass('oi-circle-check');
+		}
+		this.setTilex();
+	}
+	//选择类型0,1
+	,typeChecked: function(idx, bchk){
+		$('#map-type'+idx+'-chk').removeClass('oi-circle-'+( bchk?'x':'check' )).addClass('oi-circle-'+(bchk?'check':'x'));
+	}
+	//当前选择的地图类型
+	,getType: function(){
+		var type0 = $('#map-type0-chk').hasClass('oi-circle-check');
+		var type1 = $('#map-type1-chk').hasClass('oi-circle-check');
+		
+		if( type0 && type1 ){
+			return 2; 
+		}
+		else if( type0 ){
+			return 0; 
+		}
+		else if( type1 ){
+			return 1; 
+		}
+		return -1;
+	}
+	//是否禁用按钮: starg, stop, redo, errdo
+	,disableBtn: function(btn, bdis){
+		if( !bdis ) 
+			$('#btn-'+btn).removeAttr('disabled');
+		else
+			$('#btn-'+btn).attr('disabled', true);
+	}
+	//禁用所有按钮
+	,disableAllBtn: function(){
+		this.disableBtn('start', true);
+		this.disableBtn('stop', true);
+		this.disableBtn('redo', true);
+		this.disableBtn('errdo', true);
+	}
+	//装载任务, cpp中调用
+	,openTask: function(task, zooms){
+		App.totalCount = task.tileCount;
+		App.downCount = 0;
+		App.errCount = 0;
+		//task.file, task.dir, task.mtype, task.tileCount, task.downCount, task.errCount, task.progress
+		$('#task-file').val(task.file);
+		$('#task-dir').val(task.dir);
+		$('#tile-total').text(task.tileCount);
+		$('#tile-down').text(task.downCount);
+		$('#tile-err').text(task.errCount);
+		$('#progress').text( task.progress.toFixed(2)+'%' );
+		if( task.mtype==0||task.mtype==2 )
+			this.typeChecked(0, true);
+		if( task.mtype==1||task.mtype==2 )
+			this.typeChecked(1, true);
+		
+		this.setTilex();
+		//表格 zooms = [ [4, 123], [5, 456] ]
+		var html = '';
+		for(var i=0; i<zooms.length; i++){
+			html += '<tr><td>'+ zooms[i][0] + '</td><td>'+ zooms[i][1] + '</td></tr>';
+		}
+		$('#tile-table').html(html);
+		//激活下载按钮
+		this.disableBtn('start', false);
+		this.disableBtn('stop', true);
+		this.disableBtn('redo', false);
+		this.disableBtn('errdo', task.errCount==0);
+	}
+	//打开任务失败，cpp中调用
+	,openTaskErr: function(s){
+		this.clearAll();
+		layer.alert(s, {title:'小郭软件'});
+	}
+	,setTilex: function(){
+		var t = this.getType();
+		if(t==1) $('.tile-x').text('×2');
+		else if(t==2) $('.tile-x').text('×3');
+		else $('.tile-x').text(''); //×2
+	}
+	//显示下载进度, cpp中调用
+	,showTask: function(downCount, errCount, progress){
+		App.downCount = downCount;
+		App.errCount = errCount;
+		
+		$('#tile-down').text(downCount);
+		$('#tile-err').text(errCount);
+		$('#progress').text(progress.toFixed(2)+'%');
+		//下载结束了
+		if( progress >= 100 ){
+			this.disableAllBtn();
+			this.disableBtn('start', false);
+			this.disableBtn('redo', App.downCount==0);
+			this.disableBtn('errdo', App.errCount==0);
+		}
+	}
+	//下载完成， cpp中调用
+	,endTask: function(){
+		layer.alert('地图已经下载结束，请确认!', {title:'小郭软件'});
+	}
+	//开始下载
+	,start: function(){
+		var ret = window.doAction("start", this.getType());
+		if( ret != 1 ){
+			layer.alert(ret, {title:'小郭软件'});
+		}
+		else {
+			this.disableAllBtn();
+			this.disableBtn('stop', false);
+			this.msg('开始继续下载');
+		}
+	}
+	//停止下载
+	,stop: function(){
+		var ret = window.doAction("stop", this.getType());
+		if( ret != 1 ){
+			layer.alert(ret, {title:'小郭软件'});
+		}
+		else {
+			this.disableAllBtn();
+			this.disableBtn('start', false);
+			this.disableBtn('redo', App.downCount==0);
+			this.disableBtn('errdo', App.errCount==0);
+			this.msg('已经终止');
+		}
+	}
+	//重新下载
+	,redo: function(){
+		var ret = window.doAction("redo", this.getType());
+		if( ret != 1 ){
+			layer.alert(ret, {title:'小郭软件'});
+		}
+		else {
+			this.disableAllBtn();
+			this.disableBtn('stop', false);
+			this.msg('全部重新下载');
+		}
+	}
+	//错误的重新下载
+	,errdo: function(){
+		this.msg('errdo');
+		var ret = window.doAction("errdo", this.getType());
+		if( ret != 1 ){
+			layer.alert(ret, {title:'小郭软件'});
+		}
+		else {
+			this.disableAllBtn();
+			this.disableBtn('stop', false);
+			this.msg('重新下载错误的');
+		}
+	}
+};
+
+//初始化
+$(function(){
+	//关于对话框
+	$('.navbar-brand').click(function(){
+		App.about();
+	});
+	
+	//选择地图类型
+	$('div #map-type0').click(function(){ 
+		if( window.isDowning() ) //是否正在下装
+			return;
+		App.typeClicked('map-type0-chk'); console.log(App.getType()); 
+	});
+	$('div #map-type1').click(function(){
+		if( window.isDowning() )
+			return;
+		App.typeClicked('map-type1-chk') 
+	});
+	
+	//按钮事件
+	$('#btn-start').click( function(){ App.start() });
+	$('#btn-stop').click( function(){App.stop() });
+	$('#btn-redo').click( function(){App.redo() });
+	$('#btn-errdo').click( function(){App.errdo() });
+	
+	//初始清空
+	App.clearAll();
+	
+	//也许是传入了文件
+	window.loadAuto();
+	
+	//查询新版本
+	setTimeout(function(){
+		var uno = window.getUserNo();
+		var ver = window.getVersion();
+		$.get('http://ver.xiaoguo123.com.com/bmaptool/?id='+uno ,function(data,status){
+			if( data.hasOwnProperty('version') && data.version != ver ) {
+				layer.confirm('<b>有新的版本:'+data.version+', 是否去升级?</b><br>'+ data.desc, function(index){
+					window.openNewUrl(data.url);
+					layer.close(index);
+				});
+			}
+		});
+	}, 2000);
+});
+</script>
